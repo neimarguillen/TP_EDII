@@ -1,0 +1,687 @@
+LIST P=16F887
+#include <P16F887.INC>
+__CONFIG _CONFIG1, _FOSC_XT & _WDTE_OFF & _PWRTE_ON & _MCLRE_ON & _CP_OFF & _CPD_OFF & _BOREN_ON & _IESO_ON & _FCMEN_OFF & _LVP_OFF
+__CONFIG _CONFIG2, _BOR4V_BOR40V & _WRT_OFF
+
+;Variables
+CBLOCK 0X20
+TURNO
+CONTADOR_MINUTO
+CONTADOR
+RPM
+VALOR               ; copia de RPM para separar dígitos
+UNIDAD              ; unidad para display
+DECENA              ; decena para display
+CENTENA             ; centena para display
+UNIDADES            ; resultado separación dígitos
+DECENAS
+CENTENAS
+T_ALIENTO
+BASE_ALIENTO        ; valor de referencia leído al arrancar
+DELTA_T
+UMBRAL              ; umbral de detección de respiración
+MIN_RPM
+MAX_RPM
+DELAY1              ; contadores para delays del servo
+DELAY2
+DELAY3
+ESTADO              ; 0=normal, 1=bajo (bradi), 2=alto (taqui)
+
+RX_BYTE             ; byte recibido por UART
+RX_ESTADO           ; estado del parser (0=idle, 1=recibiendo MIN, 2=recibiendo MAX)
+RX_ACUM             ; acumulador numérico del valor recibido
+ENDC
+
+CBLOCK 0X70
+WTEMP               ; guardado de W en ISR
+STATUSTEMP          ; guardado de STATUS en ISR
+ENDC
+
+
+ORG 0X00
+GOTO INICIO
+ORG 0X04
+GOTO ISR
+
+;tablas
+ORG 0X08
+TABLA7SEG
+ADDWF PCL,F
+RETLW 0x7E    
+RETLW 0x0C    
+RETLW 0xB6    
+RETLW 0x9E    
+RETLW 0xCC    
+RETLW 0xDA    
+RETLW 0xFA    
+RETLW 0x0E    
+RETLW 0xFE    
+RETLW 0xDE    
+
+HABILITACION_DISPLAY
+ADDWF PCL,F
+RETLW 0x01   
+RETLW 0x02    
+RETLW 0x04   
+
+INICIO:
+BANKSEL ANSEL
+CLRF ANSEL	
+BSF  ANSEL,1        ; AN1 analógico (sensor)
+CLRF ANSELH
+
+;Entradas
+BANKSEL TRISA
+MOVLW b'00000111'	;seteamos puertos RA1,RA2 Y RA3	
+MOVWF TRISA
+
+;Salidas y UART
+BANKSEL TRISC
+MOVLW b'11000000'	;RC0-RC2 displays y RC6 (TX) Y RC7 (RX) son entradas 
+MOVWF TRISC		
+
+MOVLW b'00000001'
+MOVWF TRISB         ; RB0 entrada (boton reset), RB1-RB7 salidas (segmentos)
+CLRF TRISD          ; RD0=verde, RD1=amarillo, RD2=rojo, RD3=servo
+
+;UART (9600 baudios, con 4Mhz)
+BANKSEL TXSTA
+MOVLW b'00100100'   ; TXEN=1 (Habilito TX), BRGH=1 (Alta velocidad)
+MOVWF TXSTA
+BANKSEL SPBRG
+MOVLW .25           ; SPBRG = 25 para 9600 baudios (Fosc=4MHz)
+MOVWF SPBRG
+BANKSEL RCSTA
+MOVLW b'10010000'   ; SPEN=1, CREN=1 (habilita recepción continua)
+MOVWF RCSTA
+
+;rb0
+BANKSEL IOCB    
+BSF IOCB,0          ; interrupción por cambio en RB0
+
+;Configuramos option_reg
+BANKSEL OPTION_REG
+MOVLW b'10000111'   ;psa 1:256
+MOVWF OPTION_REG
+
+;adc
+BANKSEL ADCON1
+MOVLW b'00110000'   ; justificación izquierda, Vref = VDD/VSS (divisor resistivo)
+MOVWF ADCON1
+
+;tmr1 (1:8) con 0.5segundos y utilizamos contador
+BANKSEL T1CON
+MOVLW b'00110001'
+MOVWF T1CON
+MOVLW .11
+MOVWF TMR1H
+MOVLW .219
+MOVWF TMR1L	    ;valor de 0BDB = 3035
+
+;Limpiamos puertos y variables
+BANKSEL PORTB
+CLRF PORTB
+CLRF PORTC
+CLRF PORTD
+CLRF TURNO
+CLRF UNIDAD
+CLRF DECENA
+CLRF CENTENA
+CLRF CONTADOR
+CLRF CONTADOR_MINUTO
+CLRF RPM
+CLRF ESTADO
+CLRF RX_BYTE
+CLRF RX_ESTADO
+CLRF RX_ACUM
+
+;valores q cargo x defecto
+MOVLW .10
+MOVWF MIN_RPM       ; mínimo: 10 rpm
+MOVLW .20
+MOVWF MAX_RPM       ; máximo: 20 rpm
+MOVLW .30
+MOVWF UMBRAL        ; umbral ADC para detectar aliento
+
+;tmr0
+BANKSEL TMR0
+MOVLW .230
+MOVWF TMR0
+
+;interrupciones (configuración)
+BANKSEL INTCON
+MOVLW b'11101000'   ; GIE, PEIE, T0IE, RBIE habilitados
+MOVWF INTCON
+
+BANKSEL PIE1
+MOVLW b'00100001'   ; TMR1IE, RCIE habilitados
+MOVWF PIE1
+
+;leemos la base_aliento (la referencia inicial)
+BANKSEL ADCON0
+MOVLW b'10000101'   
+MOVWF ADCON0
+NOP
+NOP
+NOP
+NOP
+BSF ADCON0,1        ; GO=1
+
+ESPERAR_BASE:
+BTFSC ADCON0,1
+GOTO  ESPERAR_BASE
+
+BANKSEL ADRESH	;utilizamos jizq para quedarnos con los bits MSB
+MOVF  ADRESH,W
+MOVWF BASE_ALIENTO
+
+;estado inicial: (verde y 90º)
+CALL SERVO_90
+BCF  PORTD,1
+BCF  PORTD,2
+BSF  PORTD,0    
+
+;PROGRAMA PRINCIPAL
+LOOP:
+;enviamos pulso al servo según estado actual
+MOVF  ESTADO,W
+BTFSC STATUS,Z
+GOTO  PULSO_NORMAL      ; ESTADO=0
+
+MOVLW .1
+SUBWF ESTADO,W
+BTFSC STATUS,Z
+GOTO  PULSO_BAJO        ; ESTADO=1
+
+GOTO  PULSO_ALTO        ; ESTADO=2
+
+PULSO_BAJO:
+MOVLW .10
+MOVWF DELAY3
+LOOP_PB:
+CALL  SERVO_0
+DECFSZ DELAY3,F
+GOTO  LOOP_PB
+GOTO  LEER_ADC
+
+PULSO_NORMAL:
+MOVLW .10
+MOVWF DELAY3
+LOOP_PN:
+CALL  SERVO_90
+DECFSZ DELAY3,F
+GOTO  LOOP_PN
+GOTO  LEER_ADC
+
+PULSO_ALTO:
+MOVLW .10
+MOVWF DELAY3
+LOOP_PA:
+CALL  SERVO_180
+DECFSZ DELAY3,F
+GOTO  LOOP_PA
+
+;Leemos el ADC
+LEER_ADC:
+BANKSEL ADCON0
+MOVLW b'10000101'      
+MOVWF ADCON0
+NOP
+NOP
+NOP
+NOP
+BSF ADCON0,1
+
+ESPERAR_S1:
+BTFSC ADCON0,1
+GOTO  ESPERAR_S1
+
+BANKSEL ADRESH
+MOVF  ADRESH,W
+MOVWF T_ALIENTO
+
+;comparamos tambiente con la del aliento
+MOVF  BASE_ALIENTO,W
+SUBWF T_ALIENTO,W       ; W = T_ALIENTO - BASE_ALIENTO
+MOVWF DELTA_T
+
+MOVF  UMBRAL,W
+SUBWF DELTA_T,W         ; W = DELTA_T - UMBRAL
+BTFSC STATUS,C          ; C=1: DELTA >= UMBRAL -> hay respiración
+GOTO  HAY_RESPIRACION
+GOTO  LOOP
+
+HAY_RESPIRACION:
+INCF  CONTADOR,F
+CALL  DELAY_RESP        ; 500ms
+GOTO  LOOP
+
+;interrupciones
+ISR:
+MOVWF WTEMP
+SWAPF STATUS,W
+MOVWF STATUSTEMP
+
+BTFSC INTCON,TMR0IF
+GOTO  ISR_TMR0
+
+BTFSC PIR1,TMR1IF
+GOTO  ISR_TMR1
+
+BTFSC INTCON,RBIF
+GOTO  ISR_RB0
+
+BANKSEL PIR1
+BTFSC PIR1,RCIF
+GOTO  ISR_UART_RX
+
+GOTO  FIN_ISR
+
+ISR_TMR0:
+BCF   INTCON,TMR0IF
+MOVLW .230
+MOVWF TMR0
+
+CLRF PORTC              ; apagar displays antes de cambiar
+CLRF PORTB
+
+MOVLW UNIDAD
+ADDWF TURNO,W
+MOVWF FSR
+MOVF  INDF,W
+CALL  TABLA7SEG
+MOVWF PORTB             ; segmentos
+
+MOVF  TURNO,W
+CALL  HABILITACION_DISPLAY
+MOVWF PORTC             ; habilitar display correspondiente
+
+INCF  TURNO,F
+MOVLW .3
+SUBWF TURNO,W
+BTFSC STATUS,Z
+CLRF  TURNO
+
+GOTO FIN_ISR
+
+ISR_TMR1:
+BCF PIR1,TMR1IF
+MOVLW 0x0B
+MOVWF TMR1H
+MOVLW 0xDB
+MOVWF TMR1L
+
+INCF CONTADOR_MINUTO,F
+
+MOVLW .120              ; 120 × 0.5s = 60s = 1 minuto
+SUBWF CONTADOR_MINUTO,W
+BTFSS STATUS,Z
+GOTO  FIN_ISR           ; aún no pasó 1 minuto
+
+CLRF CONTADOR_MINUTO
+
+; Guardar y separar RPM
+MOVF  CONTADOR,W
+MOVWF RPM
+MOVWF VALOR
+CALL  SEPARAR_DIGITOS
+
+MOVF UNIDADES,W
+MOVWF UNIDAD
+MOVF DECENAS,W
+MOVWF DECENA
+MOVF CENTENAS,W
+MOVWF CENTENA
+
+; Evaluamos estado y actualizamos leds y variable ESTADO
+CALL EVALUAR_ESTADO
+
+; Transmitir los datos al puerto serie
+CALL UART_SEND_RPM
+
+CLRF CONTADOR
+
+GOTO FIN_ISR
+
+;rb0
+ISR_RB0:
+BANKSEL PORTB
+MOVF  PORTB,W           ; leer para limpiar
+BTFSC PORTB,0
+GOTO  FIN_ISR_RB0       ; RB0=1 suelto, sino es en 0.
+
+;rb0 en 0, està presionado
+CLRF CONTADOR
+CLRF CONTADOR_MINUTO
+CLRF RPM
+CLRF UNIDAD
+CLRF DECENA
+CLRF CENTENA
+CLRF ESTADO             ; vuelve a normal
+
+;leds
+BCF  PORTD,1
+BCF  PORTD,2
+BSF  PORTD,0
+
+FIN_ISR_RB0:
+BCF INTCON,RBIF
+GOTO FIN_ISR
+
+ISR_UART_RX:
+BANKSEL RCREG
+MOVF  RCREG,W           ; leer RCREG limpia RCIF automáticamente
+MOVWF RX_BYTE
+
+;seteo min
+MOVLW 0x41
+SUBWF RX_BYTE,W
+BTFSC STATUS,Z
+GOTO  RX_SET_MIN_MODE
+
+;seteo max
+MOVLW 0x42
+SUBWF RX_BYTE,W
+BTFSC STATUS,Z
+GOTO  RX_SET_MAX_MODE
+
+;Confirmamos los limites
+MOVLW 0x0A
+SUBWF RX_BYTE,W
+BTFSC STATUS,Z
+GOTO  RX_CONFIRMAR
+
+;ignoramos
+MOVLW 0x0D
+SUBWF RX_BYTE,W
+BTFSC STATUS,Z
+GOTO  FIN_ISR
+
+;ascii de 30 a 39
+MOVF  RX_BYTE,W
+SUBLW 0x2F              
+BTFSC STATUS,C
+GOTO  FIN_ISR           ; RX_BYTE <= 0x2F, no es dígito, ignorar
+
+
+MOVF  RX_BYTE,W
+SUBLW 0x39              
+BTFSS STATUS,C
+GOTO  FIN_ISR           ; RX_BYTE > 0x39, no es dígito, ignorar
+
+; Es dígito válido: convertir a valor numérico (restar 0x30)
+MOVF  RX_BYTE,W
+ADDLW 0xD0              ; le resto 0x30 en complemento a 2
+MOVWF RX_BYTE           
+
+
+MOVF  RX_ACUM,W
+MOVWF VALOR             
+
+BCF   STATUS,C
+RLF   VALOR,F           ; VALOR = RX_ACUM * 2
+BCF   STATUS,C
+RLF   VALOR,F           ; VALOR = RX_ACUM * 4
+BCF   STATUS,C
+RLF   VALOR,F           ; VALOR = RX_ACUM * 8
+
+MOVF  RX_ACUM,W
+ADDWF VALOR,F           ; VALOR = RX_ACUM * 9
+
+MOVF  RX_ACUM,W
+ADDWF VALOR,F           ; VALOR = RX_ACUM * 10
+
+MOVF  RX_BYTE,W
+ADDWF VALOR,W           ; W = RX_ACUM * 10 + dígito nuevo
+MOVWF RX_ACUM           ; guardar nuevo acumulado
+GOTO  FIN_ISR
+
+RX_SET_MIN_MODE:
+MOVLW .1
+MOVWF RX_ESTADO
+CLRF  RX_ACUM
+GOTO  FIN_ISR
+
+RX_SET_MAX_MODE:
+MOVLW .2
+MOVWF RX_ESTADO
+CLRF  RX_ACUM
+GOTO  FIN_ISR
+
+RX_CONFIRMAR:
+;Si RX_ESTADO=0, no hay comando activo, ignorar
+MOVF  RX_ESTADO,W
+BTFSC STATUS,Z
+GOTO  FIN_ISR
+
+;Si RX_ESTADO=1, guardar en MIN_RPM
+MOVLW .1
+SUBWF RX_ESTADO,W
+BTFSC STATUS,Z
+GOTO  GUARDAR_MIN
+
+;Si RX_ESTADO=2, guardar en MAX_RPM
+GOTO  GUARDAR_MAX
+
+GUARDAR_MIN:
+MOVF  RX_ACUM,W
+MOVWF MIN_RPM
+CLRF  RX_ESTADO
+CLRF  RX_ACUM
+GOTO  FIN_ISR
+
+GUARDAR_MAX:
+MOVF  RX_ACUM,W
+MOVWF MAX_RPM
+CLRF  RX_ESTADO
+CLRF  RX_ACUM
+GOTO  FIN_ISR
+
+FIN_ISR:
+SWAPF STATUSTEMP,W
+MOVWF STATUS
+SWAPF WTEMP,F
+SWAPF WTEMP,W
+RETFIE
+
+
+;subrutinas
+SEPARAR_DIGITOS:
+CLRF CENTENAS
+
+BUCLE100:
+MOVLW .100
+SUBWF VALOR,F
+BTFSC STATUS,C
+GOTO  SIGUEN100
+GOTO  FIN100
+
+SIGUEN100:
+INCF  CENTENAS,F
+GOTO  BUCLE100
+
+FIN100:
+MOVLW .100
+ADDWF VALOR,F           ; restaurar última resta
+
+CLRF  DECENAS
+
+BUCLE10:
+MOVLW .10
+SUBWF VALOR,F
+BTFSC STATUS,C
+GOTO  SIGUEN10
+GOTO  FIN10
+
+SIGUEN10:
+INCF  DECENAS,F
+GOTO  BUCLE10
+
+FIN10:
+MOVLW .10
+ADDWF VALOR,F
+MOVF  VALOR,W
+MOVWF UNIDADES
+RETURN
+
+EVALUAR_ESTADO:
+MOVF  MIN_RPM,W
+SUBWF RPM,W             ; W = RPM - MIN_RPM
+BTFSS STATUS,C          ; C=0 -> RPM < MIN -> bradipnea
+GOTO  SET_BAJO
+
+MOVF  RPM,W
+SUBWF MAX_RPM,W         ; W = MAX_RPM - RPM
+BTFSS STATUS,C          ; C=0 -> RPM > MAX -> taquipnea
+GOTO  SET_ALTO
+
+GOTO  SET_NORMAL
+
+SET_BAJO:               ; bradi (led amarillo)
+BCF  PORTD,0
+BCF  PORTD,2
+BSF  PORTD,1
+MOVLW .1
+MOVWF ESTADO
+RETURN
+
+SET_NORMAL:             ; normal (led verde)
+BCF  PORTD,1
+BCF  PORTD,2
+BSF  PORTD,0
+CLRF ESTADO
+RETURN
+
+SET_ALTO:               ; taqui (led rojo)
+BCF  PORTD,0
+BCF  PORTD,1
+BSF  PORTD,2
+MOVLW .2
+MOVWF ESTADO
+RETURN
+
+;subrutinas para comunicación serie
+
+;enviamos el byte W por puerto serie:
+UART_TX:
+BANKSEL TXSTA
+ESPERA_TX:
+BTFSS TXSTA,1           ;espero hasta que se coloque en 1 (vacio)
+GOTO  ESPERA_TX
+BANKSEL TXREG
+MOVWF TXREG
+RETURN
+
+;Tomar variables separadas, pasar a ASCII y mandar
+UART_SEND_RPM:
+; Mandar Centena
+BANKSEL CENTENA
+MOVF  CENTENA,W
+ADDLW 0x30
+CALL  UART_TX
+
+; Mandar Decena
+BANKSEL DECENA
+MOVF  DECENA,W
+ADDLW 0x30
+CALL  UART_TX
+
+; Mandar Unidad
+BANKSEL UNIDAD
+MOVF  UNIDAD,W
+ADDLW 0x30
+CALL  UART_TX
+
+; Salto de línea
+MOVLW 0x0D              ; CR
+CALL  UART_TX
+MOVLW 0x0A              ; LF
+CALL  UART_TX
+RETURN
+
+
+;control del servo
+SERVO_0:                ; condic para 0º: t alto 1ms y t bajo 19ms
+BSF  PORTD,3
+CALL ESPERO_1MS
+BCF  PORTD,3
+CALL ESPERO_19MS
+RETURN
+
+SERVO_90:               ; condic para 90º
+BSF  PORTD,3
+CALL ESPERO_1MS
+CALL ESPERO_500US
+BCF  PORTD,3
+CALL ESPERO_18_5MS
+RETURN
+
+SERVO_180:              ; condic para 180º
+BSF  PORTD,3
+CALL ESPERO_1MS
+CALL ESPERO_1MS
+BCF  PORTD,3
+CALL ESPERO_18MS
+RETURN
+
+;subrutinas de delays
+ESPERO_1MS:
+MOVLW .250
+MOVWF DELAY1
+LOOP_1MS:
+NOP
+NOP
+DECFSZ DELAY1,F
+GOTO   LOOP_1MS
+RETURN
+
+ESPERO_500US:
+MOVLW .125
+MOVWF DELAY1
+LOOP_500US:
+NOP
+NOP
+DECFSZ DELAY1,F
+GOTO   LOOP_500US
+RETURN
+
+ESPERO_18MS:
+MOVLW .18
+MOVWF DELAY2
+LOOP_18MS:
+CALL  ESPERO_1MS
+DECFSZ DELAY2,F
+GOTO  LOOP_18MS
+RETURN
+
+ESPERO_18_5MS:
+CALL ESPERO_18MS
+CALL ESPERO_500US
+RETURN
+
+ESPERO_19MS:
+CALL ESPERO_18MS
+CALL ESPERO_1MS
+RETURN
+
+;antirebote 500ms (para rb0)
+DELAY_RESP:
+MOVLW .10
+MOVWF DELAY3
+LOOP_DR3:
+MOVLW .200
+MOVWF DELAY2
+LOOP_DR2:
+MOVLW .250
+MOVWF DELAY1
+LOOP_DR1:
+NOP
+DECFSZ DELAY1,F
+GOTO   LOOP_DR1
+DECFSZ DELAY2,F
+GOTO   LOOP_DR2
+DECFSZ DELAY3,F
+GOTO   LOOP_DR3
+RETURN
+
+END

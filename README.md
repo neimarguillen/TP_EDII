@@ -399,4 +399,4 @@ A lo largo del proyecto, SIMOR experimentó diversas modificaciones tanto a nive
 
 Facultad de Ciencias Exactas, Físicas y Naturales - Universidad Nacional de Córdoba
 
-17 de Junio del 2026
+17/06/2026

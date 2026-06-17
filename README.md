@@ -79,9 +79,7 @@ El sistema tiene como componente principal un microcontrolador PIC16F887, el cua
 
 Para la implementación del circuito se realizaron ciertas consideraciones de diseño a nivel software y hardware. En base a ello, el diseño se divide en las siguientes etapas:
 
-*TMR0: Multiplexado de displays*
-
-Al utilizar 3 displays y requerir un multiplexado, se considera la frecuencia a la cual no se perciben parpadeos, equivalente a 50 Hz. Utilizando ese valor en forma de período, se obtienen 6,67 ms para cada uno de los displays, valor que se usa como tiempo de desbordamiento del TMR0.
+- **TMR0: Multiplexado de displays.** Al utilizar 3 displays y requerir un multiplexado, se considera la frecuencia a la cual no se perciben parpadeos, equivalente a 50 Hz. Utilizando ese valor en forma de período, se obtienen 6,67 ms para cada uno de los displays, valor que se usa como tiempo de desbordamiento del TMR0.
 
 $$
 TMR0=
@@ -104,9 +102,7 @@ TMR0=
 =230
 $$
 
-*TMR1: Actualización de las RPM*
-
-El bloque correspondiente al TMR1 se utiliza como fuente de interrupción para incrementar las respiraciones por minuto (RPM) sensadas por el NTC. En base a ello, se implementa un tiempo de desbordamiento de 0,5 segundos con el uso de un contador en software, para obtener 1 minuto de mediciones por parte del sensor.
+- **TMR1: Multiplexado de displays.** El bloque correspondiente al TMR1 se utiliza como fuente de interrupción para incrementar las respiraciones por minuto (RPM) sensadas por el NTC. En base a ello, se implementa un tiempo de desbordamiento de 0,5 segundos con el uso de un contador en software, para obtener 1 minuto de mediciones por parte del sensor.
 
 $$
 TMR1=
@@ -117,9 +113,7 @@ $$
 
 Debido a que TMR1 tiene la capacidad de desbordar hasta 64k, existen 2 registros para asignar el valor previamente calculado: TMR1H y TMR1L. A partir de ello, se precarga el primero con 0x0B (11 en decimal) y el segundo con 0xDB (219 en decimal), obteniendo en consecuencia 0x0BDB, es decir, 3035, como se mencionó.
 
-*Sensor NTC con ADC*
-
-El NTC es un componente que varía su resistencia con la temperatura, por lo que se utilizó un divisor resistivo para transformar esos cambios en variaciones de voltaje interpretables por el ADC.
+- **Sensor NTC con ADC.** El NTC es un componente que varía su resistencia con la temperatura, por lo que se utilizó un divisor resistivo para transformar esos cambios en variaciones de voltaje interpretables por el ADC.
 
 Para lograr la conversión a voltaje, se consideró el rango operativo del sensor de acuerdo a distintas temperaturas, siguiendo el gráfico otorgado por su fabricante (curva de 502F3470).
 
@@ -135,14 +129,14 @@ El rango de diseño corresponde a 25–40 °C, con valores de resistencia de 5 k
 
 $$
 \begin{aligned}
-25\,^{\circ}\mathrm{C}: \qquad
+25\^{\circ}\mathrm{C}: \qquad
 V_{out}
 &=
 5\,V\cdot
 \frac{5\,k\Omega}{5\,k\Omega+5\,k\Omega}=
 2.5\,V
 \\\\[12pt]
-40\,^{\circ}\mathrm{C}: \qquad
+40\^{\circ}\mathrm{C}: \qquad
 V_{out}
 &=
 5\,V\cdot
@@ -153,22 +147,18 @@ $$
 
 Los valores operativos definen el rango de referencia del ADC, calculado como la diferencia entre ambos límites, obteniendo como resultado 1,07 V. Para obtener la resolución del conversor se consideran sus 10 bits, utilizando la fórmula correspondiente al método de aproximaciones sucesivas.
 
-
 $$
 \mathrm{Resolución\ ADC}=
 \frac{1.07\,V}{2^{10}}=
 1.04\ mV
 $$
 
-*ADC: Valores de Vref+ y Vref−*
 
-Debido a que el sensor NTC detecta cambios en la temperatura del aliento, se utilizaron dos divisores resistivos para fijar valores específicos de tensión al ADC. De esta forma, el rango del conversor se reduce (pasando de 0–5 V a 2,5–3,57 V), lo que permite un mejor funcionamiento del sensor al aumentar la resolución de la conversión.
+- **ADC: Valores de Vref+ y Vref−.** Debido a que el sensor NTC detecta cambios en la temperatura del aliento, se utilizaron dos divisores resistivos para fijar valores específicos de tensión al ADC. De esta forma, el rango del conversor se reduce (pasando de 0–5 V a 2,5–3,57 V), lo que permite un mejor funcionamiento del sensor al aumentar la resolución de la conversión.
 
 Para el caso de 2,5 V se utilizaron dos resistencias de 10 kΩ; este divisor se emplea para fijar el valor de Vref− en lugar de 0 V. Para el caso de 3,57 V se utilizaron resistencias de 12 kΩ y 4,7 kΩ, con el fin de fijar Vref+ en lugar de 5 V.
 
-*UART: Velocidad de Baudaje*
-
-Para la transmisión y recepción de datos se utiliza una comunicación asíncrona, por lo que se estableció una velocidad de 9600 baudios (bits por segundo), lo que permite generar una comunicación bidireccional entre el microcontrolador y la PC.
+- **UART: Velocidad de Baudaje.** Para la transmisión y recepción de datos se utiliza una comunicación asíncrona, por lo que se estableció una velocidad de 9600 baudios (bits por segundo), lo que permite generar una comunicación bidireccional entre el microcontrolador y la PC.
 
 Se considera BRGH = 1 y se obtiene la siguiente fórmula otorgada por el fabricante en su hoja de datos:
 
@@ -187,8 +177,7 @@ $$
 
 $$
 Baud_{real}
-=
-\frac{4\times10^{6}}
+=\frac{4\times10^{6}}
 {16\cdot(25+1)}=
 9615\ \mathrm{bps}
 $$
@@ -205,34 +194,27 @@ El firmware está desarrollado en lenguaje Ensamblador, basándose en una arquit
 
 ## Diagramas de Flujo
 
-<h2>Diagramas de flujo</h2>
-
-<h3>Programa principal</h3>
-
+***Programa principal***
 <p align="center">
 <img src="https://github.com/user-attachments/assets/69b1fe4c-8ff3-473e-b04c-729aafca389b" width="500">
 </p>
 
-<h3>Rutina de interrupción TMR0</h3>
-
+***Rutina de interrupción TMR0***
 <p align="center">
 <img src="https://github.com/user-attachments/assets/593d5df3-5569-4d64-a542-2a12ac1e84f0" width="500">
 </p>
 
-<h3>Rutina de interrupción TMR1</h3>
-
+***Rutina de interrupción TMR1***
 <p align="center">
 <img src="https://github.com/user-attachments/assets/f0288116-08bf-4768-b3ae-1ac1f1a9f409" width="500">
 </p>
 
-<h3>Comunicación UART</h3>
-
+***Comunicación UART***
 <p align="center">
 <img src="https://github.com/user-attachments/assets/a47dc850-5a2b-457c-97df-fc8adc30f8c1" width="500">
 </p>
 
-<h3>Interrupción por cambio en RB0</h3>
-
+***Interrupción por cambio en RB0***
 <p align="center">
 <img src="https://github.com/user-attachments/assets/dd6a5c97-aa5d-4564-aa49-dbbc64e0c2f0" width="500">
 </p>
@@ -243,9 +225,16 @@ El firmware está desarrollado en lenguaje Ensamblador, basándose en una arquit
 
 - **Tensión de operación del sistema:** 5 V (compatible con el PIC16F887 y con el servomotor).
 - **Método de alimentación:** módulo USB-UART CP2101 y fuente de alimentación de 5 V.
-- **Consumo estimado:** *[completar con las mediciones en mA]*.
+- **Consumo estimado:** El consumo del circuito no corresponde a un valor fijo, sino que varía constantemente. Esto se debe principalmente al multiplexado de los displays, el cual enciende y apaga los segmentos varias veces por segundo, luego intervienen las LEDs de estado (verde, amarillo y rojo), las cuales se encienden o apagan según el estado evaluado. Otros factores a tener en cuenta corresponden al servo, el cual consume más que cuando se encuentra en movimiento activo y el propio PIC, que posee pequeñas variaciones de consumo según las instrucciones que se ejecuten. Al realizar la medición del consumo de corriente estimado, se conectó un multímetro en serie con la fuente de alimentación (USB UART) y el circuito. El valor corresponde al rango de 1,2 mA y 1,8 mA, siendo de operación normal.
 - **Herramientas de software:** MPLAB X IDE v5.01 y compilador AN1310 v1.05.
 - **Hardware de programación/depuración:** PICkit 3.
+
+<p align="center">
+<img src="https://github.com/user-attachments/assets/17a8e6e1-a946-4d29-abeb-ebce81ec5919" width="500">
+</p>
+<p align="center">
+<i>Medición del consumo energético.</i>
+</p>
 
 **Configuración de bits:**
 
@@ -271,9 +260,6 @@ Al contar con un único vector de interrupciones, se implementa un esquema de pr
 4. **RCIF (recepción UART):** monitorea la llegada de bytes de configuración externa. Se ubica al final porque el buffer de hardware de la UART tolera el tiempo de espera mínimo impuesto por las rutinas anteriores, sin perder datos.
 
 Con el fin de garantizar el correcto funcionamiento de los elementos de visualización y limitar las corrientes de operación a valores seguros, tanto para el microcontrolador como para los elementos de circuito asociados, se dimensionaron las resistencias correspondientes a los segmentos y a las etapas de multiplexado de los displays de 7 segmentos. También se determinaron las resistencias limitadoras de corriente para los LEDs, considerando las caídas de tensión de cada modelo y las corrientes establecidas en el diseño.
-
-<details>
-<summary><b>Resistencias para displays</b></summary>
 
 **Resistencia para cada segmento**
 
@@ -311,37 +297,28 @@ $$
 Las resistencias limitadoras para los LEDs se calcularon a partir de sus respectivas caídas de tensión directa y de la corriente de operación deseada, obteniéndose los siguientes valores comerciales:
 
 $$
-\begin{aligned}
-R_{Rojo}
-&=
-\frac{V_{Rojo}}
-{I_D}
-=
-220\,\Omega
-\\[10pt]
-R_{Amarillo}
-&=
-\frac{V_{Amarillo}}
-{I_D}
-=
-220\,\Omega
-\\[10pt]
-R_{Verde}
-&=
-\frac{V_{Verde}}
-{I_D}
-=
-330\,\Omega
-\end{aligned}
+R_{Rojo}=\frac{V_{Rojo}}
+{I_D}=
+220\ \Omega
 $$
 
-</details>
+$$
+R_{Amarillo}=\frac{V_{Amarillo}}
+{I_D}=
+220\ \Omega
+$$
+
+$$
+R_{Verde}=\frac{V_{Verde}}
+{I_D}=
+330\\Omega
+$$
 
 ## Proceso de integración y desarrollo
 
 El diseño y la programación del sistema se llevaron a cabo de forma progresiva, dividiendo el trabajo en cuatro etapas principales de desarrollo:
 
-1. **Validación inicial:** se configuró el oscilador externo del microcontrolador y se implementó el TMR0 como fuente de interrupción. A través de este temporizador y el uso de tablas de conversión, se logró programar el encendido y apagado rápido de los displays —es decir, el multiplexado—, consiguiendo que el sistema muestre números fijos de forma clara y sin parpadeos visuales.
+1. **Validación inicial:** se configuró el oscilador externo del microcontrolador y se implementó el TMR0 como fuente de interrupción. A través de este temporizador y el uso de tablas de conversión, se logró programar el encendido y apagado rápido de los displays, es decir, el multiplexado, consiguiendo que el sistema muestre números fijos de forma clara y sin parpadeos visuales.
 2. **Entradas analógicas y lógica de conteo:** se activó el módulo ADC para que el chip pueda leer el sensor de temperatura. Se programó el sistema para que guarde una lectura del ambiente al arrancar y se diseñó la lógica que detecta cada exhalación del paciente. Para evitar que el ruido del sensor genere falsos conteos, se sumó un retardo de medio segundo que actúa como filtro anti-rebote cada vez que se registra una respiración. También se implementaron los 2 divisores resistivos para fijar las tensiones de referencia.
 3. **Base de tiempo e integración de la transmisión serie:** se incorporó el TMR1 para medir un minuto mediante el uso de contadores. Se implementó la división de los valores en unidades, decenas y centenas para enviarlos de forma correcta por el puerto serie una vez cumplido el ciclo del clock.
 4. **Control mecánico y lectura de comandos serie:** se programaron los tiempos necesarios para posicionar el servomotor en tres ángulos diferentes según el estado del paciente. Se agregó una rutina de recepción de datos que detecta en tiempo real los mensajes enviados desde la computadora, los traduce y actualiza los límites que indican el estado del paciente.
@@ -384,7 +361,13 @@ Una vez lograda la comunicación bidireccional, se implementó un sistema grafic
 
 Luego de varias pruebas, se obtuvo la gráfica que se muestra a continuación:
 
-*[PENDIENTE: agregar captura de la aplicación de escritorio con la gráfica de RPM]*
+<p align="center">
+<img src="https://github.com/user-attachments/assets/634e309a-e053-4bdf-9f25-82e42c1290d4" width="600">
+</p>
+
+<p align="center">
+<i>Recepción de datos y forma de onda de las RPM.</i>
+</p>
 
 ### Evolución del prototipo
 

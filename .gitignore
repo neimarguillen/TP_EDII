@@ -1,0 +1,26 @@
+# MPLAB X
+build/
+dist/
+debug/
+release/
+
+# Archivos generados
+*.o
+*.elf
+*.hex
+*.map
+*.lst
+
+# Dependencias
+*.d
+*.p1
+*.p2
+*.p3
+
+# Archivos privados
+*.private
+*.mk
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

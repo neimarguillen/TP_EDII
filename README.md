@@ -4,19 +4,11 @@
 <img src="https://github.com/user-attachments/assets/02acabe9-fd17-495c-8be2-d1a68ed70b38" alt="LOGO_SIMOR" width="260">
 </p>
 
-<p align="center">
-
-![PIC16F887](https://img.shields.io/badge/PIC-16F887-blue)
-![Assembly](https://img.shields.io/badge/Language-Assembly-red)
-![UART](https://img.shields.io/badge/UART-9600bps-green)
-![MPLAB X](https://img.shields.io/badge/MPLAB-X-orange)
-![Proteus](https://img.shields.io/badge/Proteus-Simulation-purple)
-
-</p>
+<h1 align="center"> Sistema de Monitoreo Respiratorio </h1>
 
 # Índice
 
-- [Descripción del proyecto](#sistema-de-monitoreo-respiratorio-implementado-en-pic16f887)
+- [Descripción del proyecto](#descripción-del-proyecto)
 - [Alcance del proyecto](#alcance-del-proyecto)
 - [Posibles etapas siguientes y trabajo futuro](#posibles-etapas-siguientes-y-trabajo-futuro)
 - [Arquitectura del sistema](#arquitectura-del-sistema-hardware-y-software)
@@ -25,9 +17,9 @@
 - [Proceso de integración y desarrollo](#proceso-de-integración-y-desarrollo)
 - [Ensayos, pruebas y resultados](#ensayos-pruebas-y-resultados)
 
-## Sistema de Monitoreo Respiratorio implementado en PIC16F887
+## Descripción del proyecto
 
-SIMOR (Sistema de Monitoreo Respiratorio) es un sistema que consiste en un monitor de frecuencia respiratoria diseñado para medir e indicar en tiempo real el ritmo de respiración de un paciente. El principio de funcionamiento se basa en un único sensor térmico, correspondiente a un termistor NTC, ubicado en la zona de exhalación.
+SIMOR (Sistema de Monitoreo Respiratorio) es un sistema implementado en un implementado en PIC16F887 que consiste en un monitor de frecuencia respiratoria diseñado para medir e indicar en tiempo real el ritmo de respiración de un paciente. El principio de funcionamiento se basa en un único sensor térmico, correspondiente a un termistor NTC, ubicado en la zona de exhalación.
 
 Al alimentar el sistema, el microcontrolador realiza una lectura inicial automática para registrar la temperatura ambiente como valor de referencia. A partir de allí, cada vez que ocurre una exhalación, el sistema detecta el incremento de temperatura por encima de la referencia y registra un evento respiratorio. El circuito contabiliza de forma continua estas señales para calcular las respiraciones por minuto (RPM), mostrando el resultado localmente a través de tres displays de 7 segmentos de cátodo común.
 
@@ -87,8 +79,7 @@ El sistema tiene como componente principal un microcontrolador PIC16F887, el cua
 
 Para la implementación del circuito se realizaron ciertas consideraciones de diseño a nivel software y hardware. En base a ello, el diseño se divide en las siguientes etapas:
 
-<details>
-<summary><b>TMR0: Multiplexado de displays</b></summary>
+*TMR0: Multiplexado de displays*
 
 Al utilizar 3 displays y requerir un multiplexado, se considera la frecuencia a la cual no se perciben parpadeos, equivalente a 50 Hz. Utilizando ese valor en forma de período, se obtienen 6,67 ms para cada uno de los displays, valor que se usa como tiempo de desbordamiento del TMR0.
 
@@ -113,10 +104,7 @@ TMR0=
 =230
 $$
 
-</details>
-
-<details>
-<summary><b>TMR1: Actualización de las RPM</b></summary>
+*TMR1: Actualización de las RPM*
 
 El bloque correspondiente al TMR1 se utiliza como fuente de interrupción para incrementar las respiraciones por minuto (RPM) sensadas por el NTC. En base a ello, se implementa un tiempo de desbordamiento de 0,5 segundos con el uso de un contador en software, para obtener 1 minuto de mediciones por parte del sensor.
 
@@ -129,11 +117,7 @@ $$
 
 Debido a que TMR1 tiene la capacidad de desbordar hasta 64k, existen 2 registros para asignar el valor previamente calculado: TMR1H y TMR1L. A partir de ello, se precarga el primero con 0x0B (11 en decimal) y el segundo con 0xDB (219 en decimal), obteniendo en consecuencia 0x0BDB, es decir, 3035, como se mencionó.
 
-</details>
-
-
-<details>
-<summary><b>Sensor NTC con ADC</b></summary>
+*Sensor NTC con ADC*
 
 El NTC es un componente que varía su resistencia con la temperatura, por lo que se utilizó un divisor resistivo para transformar esos cambios en variaciones de voltaje interpretables por el ADC.
 
@@ -147,7 +131,7 @@ Para lograr la conversión a voltaje, se consideró el rango operativo del senso
 <i>Curva característica resistencia-temperatura del sensor MF52A (502F3470).</i>
 </p>
 
-El rango de diseño corresponde a 25–40 °C, con valores de resistencia de 5 kΩ y 2 kΩ respectivamente. A partir de ello se calculó el voltaje de salida (Vout) para ambas situaciones:
+El rango de diseño corresponde a 25–40 °C, con valores de resistencia de 5 kΩ y 2 kΩ respectivamente. A partir de ello se calculó el voltaje de salida (Vout) para ambas situaciones: 
 
 $$
 \begin{aligned}
@@ -155,49 +139,34 @@ $$
 V_{out}
 &=
 5\,V\cdot
-\frac{5\,k\Omega}{5\,k\Omega+5\,k\Omega}
-\\[8pt]
-&=
+\frac{5\,k\Omega}{5\,k\Omega+5\,k\Omega}=
 2.5\,V
-\end{aligned}
-$$
-
-$$
-\begin{aligned}
+\\\\[12pt]
 40\,^{\circ}\mathrm{C}: \qquad
 V_{out}
 &=
 5\,V\cdot
-\frac{5\,k\Omega}{5\,k\Omega+2\,k\Omega}
-\\[8pt]
-&=
+\frac{5\,k\Omega}{5\,k\Omega+2\,k\Omega}=
 3.57\,V
 \end{aligned}
 $$
 
 Los valores operativos definen el rango de referencia del ADC, calculado como la diferencia entre ambos límites, obteniendo como resultado 1,07 V. Para obtener la resolución del conversor se consideran sus 10 bits, utilizando la fórmula correspondiente al método de aproximaciones sucesivas.
 
+
 $$
-\mathrm{Resolución\ ADC}
-=
-\frac{1.07\,V}{2^{10}}
-=
-1.04\,mV
+\mathrm{Resolución\ ADC}=
+\frac{1.07\,V}{2^{10}}=
+1.04\ mV
 $$
 
-</details>
-
-<details>
-<summary><b>ADC: Valores de Vref+ y Vref−</b></summary>
+*ADC: Valores de Vref+ y Vref−*
 
 Debido a que el sensor NTC detecta cambios en la temperatura del aliento, se utilizaron dos divisores resistivos para fijar valores específicos de tensión al ADC. De esta forma, el rango del conversor se reduce (pasando de 0–5 V a 2,5–3,57 V), lo que permite un mejor funcionamiento del sensor al aumentar la resolución de la conversión.
 
 Para el caso de 2,5 V se utilizaron dos resistencias de 10 kΩ; este divisor se emplea para fijar el valor de Vref− en lugar de 0 V. Para el caso de 3,57 V se utilizaron resistencias de 12 kΩ y 4,7 kΩ, con el fin de fijar Vref+ en lugar de 5 V.
 
-</details>
-
-<details>
-<summary><b>UART: Velocidad de Baudaje</b></summary>
+*UART: Velocidad de Baudaje*
 
 Para la transmisión y recepción de datos se utiliza una comunicación asíncrona, por lo que se estableció una velocidad de 9600 baudios (bits por segundo), lo que permite generar una comunicación bidireccional entre el microcontrolador y la PC.
 
@@ -209,32 +178,26 @@ $$
 
 $$
 SPBRG=
-\frac{4\times10^{6}}{16\cdot9600}-1
-=
+\frac{4\times10^{6}}{16\cdot9600}-1 =
 25.04
 \approx25
 $$
 
-**Verificación:**
+*Verificación:*
 
 $$
 Baud_{real}
 =
 \frac{4\times10^{6}}
-{16\cdot(25+1)}
-=
+{16\cdot(25+1)}=
 9615\ \mathrm{bps}
 $$
 
 $$
-Error
-=
-\frac{9615-9600}{9600}
-=
+Error=
+\frac{9615-9600}{9600}=
 0.16\%
 $$
-
-</details>
 
 ## Arquitectura de software
 
@@ -242,17 +205,37 @@ El firmware está desarrollado en lenguaje Ensamblador, basándose en una arquit
 
 ## Diagramas de Flujo
 
-| Programa principal | TMR0 |
-|:---:|:---:|
-| <img src="https://github.com/user-attachments/assets/69b1fe4c-8ff3-473e-b04c-729aafca389b" width="350"> | <img src="https://github.com/user-attachments/assets/593d5df3-5569-4d64-a542-2a12ac1e84f0" width="350"> |
+<h2>Diagramas de flujo</h2>
 
-| TMR1 | UART |
-|:---:|:---:|
-| <img src="https://github.com/user-attachments/assets/f0288116-08bf-4768-b3ae-1ac1f1a9f409" width="350"> | <img src="https://github.com/user-attachments/assets/a47dc850-5a2b-457c-97df-fc8adc30f8c1" width="350"> |
+<h3>Programa principal</h3>
 
-| RB0 |
-|:---:|
-| <img src="https://github.com/user-attachments/assets/dd6a5c97-aa5d-4564-aa49-dbbc64e0c2f0" width="350"> |
+<p align="center">
+<img src="https://github.com/user-attachments/assets/69b1fe4c-8ff3-473e-b04c-729aafca389b" width="500">
+</p>
+
+<h3>Rutina de interrupción TMR0</h3>
+
+<p align="center">
+<img src="https://github.com/user-attachments/assets/593d5df3-5569-4d64-a542-2a12ac1e84f0" width="500">
+</p>
+
+<h3>Rutina de interrupción TMR1</h3>
+
+<p align="center">
+<img src="https://github.com/user-attachments/assets/f0288116-08bf-4768-b3ae-1ac1f1a9f409" width="500">
+</p>
+
+<h3>Comunicación UART</h3>
+
+<p align="center">
+<img src="https://github.com/user-attachments/assets/a47dc850-5a2b-457c-97df-fc8adc30f8c1" width="500">
+</p>
+
+<h3>Interrupción por cambio en RB0</h3>
+
+<p align="center">
+<img src="https://github.com/user-attachments/assets/dd6a5c97-aa5d-4564-aa49-dbbc64e0c2f0" width="500">
+</p>
 
 ## Especificaciones eléctricas, alimentación y entorno
 
@@ -303,8 +286,7 @@ $$
 $$
 R_D=
 \frac{5V-0.2V-2V}
-{7\,mA}
-=
+{7\,mA}=
 400\,\Omega
 \approx470\,\Omega
 $$
@@ -320,15 +302,11 @@ $$
 $$
 R_b=
 \frac{(5-0.7)\,V\cdot30}
-{4\cdot7\,mA}
-=
+{4\cdot7\,mA}=
 6.14\,k\Omega
 $$
 
-</details>
-
-<details>
-<summary><b>Cálculo de resistencias para LEDs</b></summary>
+**Cálculo de resistencias para LEDs**
 
 Las resistencias limitadoras para los LEDs se calcularon a partir de sus respectivas caídas de tensión directa y de la corriente de operación deseada, obteniéndose los siguientes valores comerciales:
 

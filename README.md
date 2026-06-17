@@ -131,7 +131,6 @@ Debido a que TMR1 tiene la capacidad de desbordar hasta 64k, existen 2 registros
 
 </details>
 
-> **Nota:** esta sección menciona un contador que llega a 60 para completar el minuto de medición, mientras que la sección de *Periféricos internos utilizados* indica que se acumulan 120 ciclos. Conviene revisar cuál de los dos valores es el correcto antes de la entrega final.
 
 <details>
 <summary><b>Sensor NTC con ADC</b></summary>

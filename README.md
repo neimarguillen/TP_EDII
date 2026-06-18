@@ -19,19 +19,19 @@
 
 ## Descripción del proyecto
 
-SIMOR (Sistema de Monitoreo Respiratorio) es un sistema implementado en un implementado en PIC16F887 que consiste en un monitor de frecuencia respiratoria diseñado para medir e indicar en tiempo real el ritmo de respiración de un paciente. El principio de funcionamiento se basa en un único sensor térmico, correspondiente a un termistor NTC, ubicado en la zona de exhalación.
+SIMOR (Sistema de Monitoreo Respiratorio) es un dispositivo electrónico basado en un microcontrolador PIC16F887, diseñado para medir e indicar en tiempo real el ritmo de respiración de un paciente. El principio de funcionamiento se basa en un único sensor térmico, correspondiente a un termistor NTC, ubicado en la zona de exhalación.
 
 Al alimentar el sistema, el microcontrolador realiza una lectura inicial automática para registrar la temperatura ambiente como valor de referencia. A partir de allí, cada vez que ocurre una exhalación, el sistema detecta el incremento de temperatura por encima de la referencia y registra un evento respiratorio. El circuito contabiliza de forma continua estas señales para calcular las respiraciones por minuto (RPM), mostrando el resultado localmente a través de tres displays de 7 segmentos de cátodo común.
 
-Además de la visualización numérica, el sistema evalúa la condición del paciente y la clasifica en tres niveles clínicos: frecuencia normal, bradipnea (frecuencia baja) o taquipnea (frecuencia alta). El estado de salud asociado se señaliza de manera física e inmediata mediante el posicionamiento angular de un servomotor y el encendido de diodos LED (verde, amarillo y rojo, respectivamente).
+Además de la indicación numérica, el sistema evalúa la condición respiratoria del paciente y la clasifica en tres estados clínicos: frecuencia normal, bradipnea (frecuencia respiratoria inferior al rango establecido) y taquipnea (frecuencia respiratoria superior al rango establecido). Cada estado se representa visualmente mediante el encendido de diodos LED de diferentes colores (verde, amarillo y rojo) y mediante el posicionamiento angular de un servomotor, proporcionando una indicación rápida del estado del paciente.
 
-El sistema cuenta con comunicación bidireccional UART por puerto serie, lo que permite enviar datos desde el microcontrolador hacia una computadora y viceversa, y así establecer nuevos límites de RPM y considerarlos durante la contabilización de las respiraciones.
+El sistema incorpora comunicación serial UART bidireccional, permitiendo el intercambio de datos entre el microcontrolador y una computadora. A través de esta interfaz es posible visualizar información del sistema y modificar los límites de frecuencia respiratoria utilizados para la clasificación clínica, otorgando flexibilidad para su adaptación a distintos escenarios de monitoreo.
 
 ## Alcance del proyecto
 
 El sistema es capaz de:
 
-- **Detectar las respiraciones:** SIMOR mide la frecuencia respiratoria utilizando un sensor analógico de aliento, detectando variaciones por encima de un umbral respecto a una lectura base (temperatura ambiente) tomada al inicio del programa.
+- **Detectar las respiraciones:** SIMOR mide la frecuencia respiratoria utilizando un sensor analógico de aliento (NTC), detectando variaciones por encima de un umbral respecto a una lectura base (temperatura ambiente) tomada al inicio del programa.
 - **Calcular y visualizar:** SIMOR contabiliza las respiraciones y calcula las respiraciones por minuto (RPM) exactas, tras un ciclo de 60 segundos, mostrando el resultado en 3 displays de 7 segmentos.
 - **Clasificar el estado vital:** SIMOR evalúa las RPM calculadas respecto a límites configurables y, en base a ello, determina uno de tres estados posibles: normal, bradipnea/bajo o taquipnea/alto (diodos verde, amarillo y rojo, respectivamente).
 - **Accionamiento físico:** SIMOR controla la posición de un servomotor mediante modulación de ancho de pulso (PWM) establecida en software, moviéndolo a 90°, 0° o 180° (estado normal, bradipnea y taquipnea, respectivamente) según corresponda.
@@ -65,10 +65,20 @@ El sistema tiene como componente principal un microcontrolador PIC16F887, el cua
 - **Displays y comunicación:** en el puerto C, los pines RC0, RC1 y RC2 habilitan cada uno de los tres displays de 7 segmentos, lo que permite el multiplexado para la visualización del número de RPM. Por otra parte, los pines RC6 y RC7 se emplean para la comunicación serie con la computadora, permitiendo transmitir las RPM medidas y recibir nuevos valores de configuración para los límites de operación.
 - **LEDs y servomotor:** los pines RD0, RD1 y RD2 controlan los LEDs (verde, amarillo y rojo, respectivamente) que indican el estado del paciente. El pin RD3 se utiliza para enviar los pulsos de control al servomotor, el cual además necesita una fuente externa para alimentarse y evitar ruido y fallas por cortocircuito.
 
+Se ilustra a continuación el diagrama de bloques considerando el microcontrolador mencionado.
+
+<p align="center">
+<img width="751" height="409" alt="Diag_bloques" src="https://github.com/user-attachments/assets/60d5fc29-972c-4ffd-9cab-7b21f96dc4c3" />
+</p>
+
+<p align="center">
+<i>Diagrama de bloques de SIMOR.</i>
+</p>
+
 ### Esquemático del circuito
 
 <p align="center">
-<img src="https://github.com/user-attachments/assets/bc62280d-56f3-4e22-b62e-d11fbc753c87" width="850">
+<img width="1141" height="489" alt="ESQUEMATICO" src="https://github.com/user-attachments/assets/1bf094af-2170-488c-8778-0bb12683a9cf" />
 </p>
 
 <p align="center">
@@ -211,7 +221,7 @@ El firmware está desarrollado en lenguaje Ensamblador, basándose en una arquit
 
 ***Comunicación UART***
 <p align="center">
-<img src="https://github.com/user-attachments/assets/a47dc850-5a2b-457c-97df-fc8adc30f8c1" width="500">
+<img width="448" height="453" alt="ISB_UART" src="https://github.com/user-attachments/assets/cc788c7b-152a-4859-bf01-a3bd3c8fe70c" />
 </p>
 
 ***Interrupción por cambio en RB0***

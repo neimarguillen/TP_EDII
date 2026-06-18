@@ -406,6 +406,9 @@ A lo largo del proyecto, SIMOR experimentó diversas modificaciones tanto a nive
 
 **Guillén Mariño, Neimar Sharim**
 
+## Profesor
+
+**Marcos Javier Blasco**
 
 Facultad de Ciencias Exactas, Físicas y Naturales - Universidad Nacional de Córdoba
 

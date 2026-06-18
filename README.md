@@ -78,7 +78,7 @@ Se ilustra a continuación el diagrama de bloques considerando el microcontrolad
 ### Esquemático del circuito
 
 <p align="center">
-<img width="1141" height="489" alt="ESQUEMATICO" src="https://github.com/user-attachments/assets/1bf094af-2170-488c-8778-0bb12683a9cf" />
+<img width="1165" height="483" alt="ESQUEMATICO_NUEVO" src="https://github.com/user-attachments/assets/2f8822b7-ac2e-4c38-87e3-48dcc127aa0b" />
 </p>
 
 <p align="center">

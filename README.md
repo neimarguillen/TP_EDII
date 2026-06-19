@@ -6,16 +6,21 @@
 
 <h1 align="center"> Sistema de Monitoreo Respiratorio </h1>
 
+> **Asignatura:** Electrónica Digital II.  *Facultad de Ciencias Exactas, Físicas y Naturales - Universidad Nacional de Córdoba.*
+> **Integrantes:** de la Torre Guadalupe, Guillén M. Neimar Sharim, Fernández Valle Justo.
+> **Docente:** Ing. Marcos J. Blasco.
+
+
 # Índice
 
 - [Descripción del proyecto](#descripción-del-proyecto)
 - [Alcance del proyecto](#alcance-del-proyecto)
-- [Posibles etapas siguientes y trabajo futuro](#posibles-etapas-siguientes-y-trabajo-futuro)
 - [Arquitectura del sistema](#arquitectura-del-sistema-hardware-y-software)
 - [Arquitectura de software](#arquitectura-de-software)
 - [Especificaciones eléctricas, alimentación y entorno](#especificaciones-eléctricas-alimentación-y-entorno)
 - [Proceso de integración y desarrollo](#proceso-de-integración-y-desarrollo)
 - [Ensayos, pruebas y resultados](#ensayos-pruebas-y-resultados)
+- [Posibles etapas siguientes y trabajo futuro](#posibles-etapas-siguientes-y-trabajo-futuro)
 
 ## Descripción del proyecto
 
@@ -45,14 +50,6 @@ El sistema no es capaz de:
 - **Almacenar datos:** SIMOR no guarda un registro de las lecturas pasadas en memoria no volátil. Una vez transcurrido el minuto y reiniciado el cálculo, los datos anteriores se descartan del microcontrolador.
 - **Actualizar y transmitir en tiempo real continuo:** el cálculo de la frecuencia respiratoria y el envío de datos por UART no se actualizan con cada respiro; SIMOR espera a que transcurra un minuto completo para entregar y transmitir el dato final.
 - **Calibrar dinámicamente o seguir la línea base:** la referencia del sensor se toma de forma estática una sola vez durante el encendido del equipo y no se ajusta automáticamente si el ambiente cambia o si el sensor sufre deriva con el uso continuo.
-
-## Posibles etapas siguientes y trabajo futuro
-
-A futuro, se busca implementar las siguientes mejoras:
-
-- Migración del circuito implementado en protoboard a un circuito impreso (PCB), con el fin de volver más robusto al sistema físico frente a entornos clínicos.
-- Implementación de modos de bajo consumo para que el monitor pueda operar de forma portátil, sin requerir fuente de alimentación externa.
-- Implementación de almacenamiento que permita registrar el historial respiratorio del paciente durante toda la noche con sellos de fecha y hora, facilitando el diagnóstico de trastornos como la apnea del sueño sin necesidad de una PC conectada permanentemente.
 
 ## Arquitectura del sistema: hardware y software
 
@@ -195,8 +192,7 @@ $$
 $$
 Error=
 \frac{9615-9600}{9600}=
-0.16\%
-$$
+0.16\%$$
 
 ## Arquitectura de software
 
@@ -382,6 +378,7 @@ Luego de varias pruebas, se obtuvo la gráfica que se muestra a continuación:
 ### Evolución del prototipo
 
 A lo largo del proyecto, SIMOR experimentó diversas modificaciones tanto a nivel hardware como software. A continuación se evidencia la evolución física del sistema.
+
 <p align="center">
 <img src="https://github.com/user-attachments/assets/c095588d-6130-44f9-a88e-890a42da3815" width="500">
 </p>
@@ -418,7 +415,9 @@ Una vez realizado el montaje, se realizó la verificación de la señal analógi
 <i>Paciente A.</i>
 </p>
 
-Se realizó un análisis de la figura correspondiente al paciente A, en la cual se logró observar un cambio en el comportamiento de la onda en la mitad de la escala de tiempo utilizada (25 segundos). En principio, durante la primera mitad se observó que la onda se compone de oscilaciones rápidas y de baja amplitud, manifestando una forma errática de la misma, clínicamente esto indica que la respiración del paciente A está siendo interferida por tos, carcajadas, etc. Durante la segunda mitad, se logró apreciar el instante en el que el paciente comienza a respirar de manera uniforme, lo que indica que, al entrar y salir mucho más volumen de aire, el sensor experimenta cambios de temperaturas drásticos, lo que se traduce o se visualiza en un aumento de la amplitud pico a pico.
+Se realizó un análisis de la figura correspondiente al paciente A, en la que se observó un cambio significativo en el comportamiento de la señal en la mitad de la escala temporal utilizada (25 segundos). Durante la primera mitad del registro, la señal presenta oscilaciones rápidas y de baja amplitud, con una forma irregular y errática. Desde el punto de vista clínico, este comportamiento puede atribuirse a interferencias producidas por acciones como la tos, las carcajadas u otros movimientos respiratorios no periódicos.
+En la segunda mitad del registro, se aprecia el momento en que el paciente comienza a respirar de manera más uniforme y controlada. Como consecuencia, el volumen de aire inspirado y espirado aumenta, generando variaciones de temperatura más pronunciadas sobre el sensor. Esto se refleja en un incremento de la amplitud pico a pico de la señal, evidenciando una respiración más estable y profunda.
+
 
 <p align="center">
 <img width="1447" height="1087" alt="RPM_PersonaBB" src="https://github.com/user-attachments/assets/ea661621-1fcf-4f25-ac53-2170f2c273f1" />
@@ -428,26 +427,33 @@ Se realizó un análisis de la figura correspondiente al paciente A, en la cual 
 <i>Paciente B.</i>
 </p>
 
-En la figura correspondiente al paciente B se analizaron los datos del osciloscopio para la verificación de la ejecución del sensor. Durante la prueba, se observó en la pantalla del instrumento, que la señal contó con una frecuencia de 214,6 mHz, equivalente a un periodo de 4,66 segundos. Para obtener las RPM se realiza la relación entre un minuto y el periodo previamente calculado.
+En la figura correspondiente al paciente B se analizaron los datos obtenidos mediante el osciloscopio con el fin de verificar el correcto funcionamiento del sensor. Durante la prueba, se observó una señal con una frecuencia de 214,6 mHz, lo que corresponde a un período de 4,66 segundos.
 
-(nei agrega el latex aca)
+A partir de este valor, se calculó la frecuencia respiratoria expresada en respiraciones por minuto (RPM), realizando la relación entre un minuto (60 segundos) y el período previamente determinado. De esta manera, se obtuvo una frecuencia respiratoria aproximada de 12,9 RPM.
 
-Los análisis realizados permiten el estudio de la relación entre la temperatura sensada del aliento y el caudal respiratorio.
+$$
+\mathrm{RPM}=
+\frac{60}{4.66}=
+12.9\ RPM
+$$
 
-(nei agrega la otra ecuacion)
+Los análisis realizados permiten el estudio de la relación existente entre la temperatura del aire espirado y el caudal respiratorio. En el contexto clínico, a este último se le caracteriza como Ventilación por Minuto (VM), y se encuentra directamente relacionado con el Volumen Corriente (VC) y la frecuencia respiratoria (RPM) según la siguiente expresión: 
 
-El parámetro de Ventilación por Minuto (Caudal) presenta mayor relevancia clínica frente a las RPM. Esto es debido a que estas últimas indican qué tan rápido respira alguien, pero el Volumen Minuto indica cuánto aire ingresa realmente a los pulmones para oxigenar la sangre.
+$$
+\text{Ventilación por minuto} = \text{Volumen Corriente} \times \text{Frecuencia Respiratoria}
+$$
 
-## Autores
+Dónde el VC representa la cantidad de aire movilizada en cada ciclo respiratorio y la frecuencia el número de respiraciones realizadas por minuto. 
 
-**de la Torre, Guadalupe**
+El parámetro de Ventilación por Minuto (o caudal respiratorio) posee una mayor relevancia clínica que la frecuencia respiratoria. En comparación a las RPM, la ventilación por minuto considera el volumen total de aire que ingresa y egresa de los pulmones en las respiraciones durante el mismo intervalo de tiempo.
 
-**Fernández Valle, Justo**
+De este modo, este parámetro proporciona una medida más representativa de la eficacia del proceso ventilatorio, ya que está directamente relacionado con la cantidad total de aire disponible que participa durante el intercambio gaseoso y, en consecuencia, con la oxigenación de la sangre y la eliminación de dióxido de carbono. Por esta razón, el caudal constituye una variable física de alto valor clínico y constituye una herramienta valiosa para el diagnóstico, ya que nos aporta información crítica sobre el estado del paciente  y permite detectar alteraciones asociadas a diversas patologías respiratorias y afecciones que comprometan la función pulmonar.
 
-**Guillén Mariño, Neimar Sharim**
+## Etapas siguientes y trabajo futuro
 
-**Profesor:** Marcos Javier Blasco
+A futuro, se busca implementar las siguientes mejoras:
 
-Facultad de Ciencias Exactas, Físicas y Naturales - Universidad Nacional de Córdoba
-
-17/06/2026
+- Migración del circuito implementado en protoboard a un circuito impreso (PCB), con el objetivo de volver más robusto al sistema para su eventual implementación en entornos clínicos reales. 
+- Implementación de modos de bajo consumo para que el sistema pueda operar de forma portátil, sin requerir fuente de alimentación externa. 
+- Implementación de un sistema de almacenamiento que permita registrar el historial respiratorio del paciente, incluyendo registros de fecha y hora.
+- Incorporación de sensores de caudal respiratorio como referencia para realizar una validación del método propuesto. Esta etapa permitiría correlacionar las variaciones de temperatura detectadas por el NTC con mediciones directas del flujo de aire, con el fin de obtener una relación cuantitativa entre ambas variables que contribuya a la calibración y caracterización de SIMOR.

@@ -20,7 +20,7 @@
 - [Especificaciones eléctricas, alimentación y entorno](#especificaciones-eléctricas-alimentación-y-entorno)
 - [Proceso de integración y desarrollo](#proceso-de-integración-y-desarrollo)
 - [Ensayos, pruebas y resultados](#ensayos-pruebas-y-resultados)
-- [Posibles etapas siguientes y trabajo futuro](#posibles-etapas-siguientes-y-trabajo-futuro)
+- [Etapas siguientes y trabajo futuro](#etapas-siguientes-y-trabajo-futuro)
 
 ## Descripción del proyecto
 
@@ -196,7 +196,13 @@ Error=
 
 ## Arquitectura de software
 
-El firmware está desarrollado en lenguaje Ensamblador, basándose en una arquitectura manejada por interrupciones. En el lazo principal, el sistema realiza continuamente conversiones ADC para calcular la diferencia térmica y determinar si existe respiración por encima de un umbral preestablecido.
+El firmware está desarrollado en lenguaje Ensamblador, basándose en una arquitectura manejada por interrupciones. En el lazo principal, el sistema realiza continuamente conversiones ADC para calcular la diferencia térmica y determinar la presencia de respiración por encima de un umbral preestablecido y superado por exhalaciones.
+
+Complementariamente, se desarrolló una aplicación de escritorio utilizando React.js y el framework Electron.js destinada a la visualización y análisis de los datos. La interfaz, permite representar gráficamente las últimas 30 mediciones de frecuencia respiratoria (RPM) enviadas por el microcontrolador, así como calcular el promedio e dichas mediciones, proporcionando un registro correspondiente a aproximadamente los últimos 30 minutos de monitoreo.
+
+La comunicación entre el PIC y la aplicación se implementó a través de Python, mediante el uso de la biblioteca PySerial, un script ejecutado desde el CMD de la PC recibe los datos transmitidos por el microcontrolador a través de la UART, mostrándolos en la consola y generando un archivo de texto .txt con las mediciones. El archivo, es utilizado por la aplicación para extraer y visualizar esa información. 
+
+De esta manera, el sistema combina una etapaembebida encargada de la adquisición y procesameinto de las señales con una capa de software de alto nival, orientada al almacenamiento y la repsentación gráfica de manera más intuitiva para el usuario. Esta última etapa, brinda al usuario la oportunidad de identificar tendencias y variaciones en la frecuencia respiratoria que no se podrían deducir mediante la observación de valores aislados. 
 
 ## Diagramas de Flujo
 

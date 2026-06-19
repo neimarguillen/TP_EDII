@@ -420,7 +420,7 @@ En la segunda mitad del registro, se aprecia el momento en que el paciente comie
 
 
 <p align="center">
-<img width="1447" height="1087" alt="RPM_PersonaBB" src="https://github.com/user-attachments/assets/ea661621-1fcf-4f25-ac53-2170f2c273f1" />
+<img width="1419" height="1045" alt="RPM_PersonaBB" src="https://github.com/user-attachments/assets/e5b7cd6c-f4b1-4114-a71f-dd25ce1f4e6e" />
 </p>
 
 <p align="center">

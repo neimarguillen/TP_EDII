@@ -418,11 +418,11 @@ Una vez realizado el montaje, se realizó la verificación de la señal analógi
 <i>Paciente A.</i>
 </p>
 
+Se realizó un análisis de la figura correspondiente al paciente A, en la cual se logró observar un cambio en el comportamiento de la onda en la mitad de la escala de tiempo utilizada (25 segundos). En principio, durante la primera mitad se observó que la onda se compone de oscilaciones rápidas y de baja amplitud, manifestando una forma errática de la misma, clínicamente esto indica que la respiración del paciente A está siendo interferida por tos, carcajadas, etc. Durante la segunda mitad, se logró apreciar el instante en el que el paciente comienza a respirar de manera uniforme, lo que indica que, al entrar y salir mucho más volumen de aire, el sensor experimenta cambios de temperaturas drásticos, lo que se traduce o se visualiza en un aumento de la amplitud pico a pico.
+
 <p align="center">
 <img width="1447" height="1087" alt="RPM_PersonaBB" src="https://github.com/user-attachments/assets/ea661621-1fcf-4f25-ac53-2170f2c273f1" />
 </p>
-
-Se realizó un análisis de la figura correspondiente al paciente A, en la cual se logró observar un cambio en el comportamiento de la onda en la mitad de la escala de tiempo utilizada (25 segundos). En principio, durante la primera mitad se observó que la onda se compone de oscilaciones rápidas y de baja amplitud, manifestando una forma errática de la misma, clínicamente esto indica que la respiración del paciente A está siendo interferida por tos, carcajadas, etc. Durante la segunda mitad, se logró apreciar el instante en el que el paciente comienza a respirar de manera uniforme, lo que indica que, al entrar y salir mucho más volumen de aire, el sensor experimenta cambios de temperaturas drásticos, lo que se traduce o se visualiza en un aumento de la amplitud pico a pico.
 
 <p align="center">
 <i>Paciente B.</i>

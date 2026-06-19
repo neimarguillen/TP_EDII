@@ -398,6 +398,46 @@ A lo largo del proyecto, SIMOR experimentó diversas modificaciones tanto a nive
 <i>Versión final del armado de SIMOR.</i>
 </p>
 
+A modo de mejorar la eficacia del sensando de la temperatura del aliento, se modificó la posición del NTC, incluyéndolo dentro de una mascarilla para nebulizar. 
+
+<p align="center">
+<img width="900" height="1600" alt="Nebulizador" src="https://github.com/user-attachments/assets/eea4d90b-80fc-46da-9c98-54cec5100ed6" />
+</p>
+
+<p align="center">
+<i>Montaje del sensor.</i>
+</p>
+
+Una vez realizado el montaje, se realizó la verificación de la señal analógica, proveniente del sensado del aliento, mediante el uso de un osciloscopio. Para ello, se decidió probar el sistema bajo dos escenarios diferentes (Paciente A y Paciente B).
+
+<p align="center">
+<img width="893" height="653" alt="RPM_PersonaB" src="https://github.com/user-attachments/assets/20bc856b-ddb8-4abb-952a-718db597f286" />
+</p>
+
+<p align="center">
+<i>Paciente A.</i>
+</p>
+
+<p align="center">
+<img width="1447" height="1087" alt="RPM_PersonaBB" src="https://github.com/user-attachments/assets/ea661621-1fcf-4f25-ac53-2170f2c273f1" />
+</p>
+
+Se realizó un análisis de la figura correspondiente al paciente A, en la cual se logró observar un cambio en el comportamiento de la onda en la mitad de la escala de tiempo utilizada (25 segundos). En principio, durante la primera mitad se observó que la onda se compone de oscilaciones rápidas y de baja amplitud, manifestando una forma errática de la misma, clínicamente esto indica que la respiración del paciente A está siendo interferida por tos, carcajadas, etc. Durante la segunda mitad, se logró apreciar el instante en el que el paciente comienza a respirar de manera uniforme, lo que indica que, al entrar y salir mucho más volumen de aire, el sensor experimenta cambios de temperaturas drásticos, lo que se traduce o se visualiza en un aumento de la amplitud pico a pico.
+
+<p align="center">
+<i>Paciente B.</i>
+</p>
+
+En la figura correspondiente al paciente B se analizaron los datos del osciloscopio para la verificación de la ejecución del sensor. Durante la prueba, se observó en la pantalla del instrumento, que la señal contó con una frecuencia de 214,6 mHz, equivalente a un periodo de 4,66 segundos. Para obtener las RPM se realiza la relación entre un minuto y el periodo previamente calculado.
+
+(nei agrega el latex aca)
+
+Los análisis realizados permiten el estudio de la relación entre la temperatura sensada del aliento y el caudal respiratorio.
+
+(nei agrega la otra ecuacion)
+
+El parámetro de Ventilación por Minuto (Caudal) presenta mayor relevancia clínica frente a las RPM. Esto es debido a que estas últimas indican qué tan rápido respira alguien, pero el Volumen Minuto indica cuánto aire ingresa realmente a los pulmones para oxigenar la sangre.
+
 ## Autores
 
 **de la Torre, Guadalupe**

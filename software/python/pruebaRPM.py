@@ -11,15 +11,15 @@ try:
     print(f"Conectado al {PUERTO}.")
     print(f"Escribiendo datos en '{NOMBRE_ARCHIVO}' en tiempo real.")
     print("Comandos disponibles:")
-    print("  SET_MIN=X  ->  actualiza el límite inferior de RPM en el PIC")
-    print("  SET_MAX=X  ->  actualiza el límite superior de RPM en el PIC")
+    print("  SET_MIN=X  ->  actualiza el límite inferior de las RPM en el PIC")
+    print("  SET_MAX=X  ->  actualiza el límite superior de las RPM en el PIC")
     print("Presioná Ctrl+C para salir.\n")
 except Exception as e:
     print(f"Error al conectar: {e}")
     exit()
 
-
-def escuchar_comandos():
+#docstring de la función 
+def escuchar_comandos(): 
     """
     Hilo paralelo que escucha comandos del usuario en el CMD.
     Protocolo hacia el PIC:
@@ -51,7 +51,7 @@ def escuchar_comandos():
                     print("[CMD] Formato inválido. Usá: SET_MAX=X (ej: SET_MAX=25)")
 
             elif cmd == "":
-                pass  # ignorar líneas vacías
+                pass  # Ignoro líneas vacías
 
             else:
                 print("[CMD] Comando no reconocido.")
@@ -64,11 +64,11 @@ def escuchar_comandos():
             break
 
 
-# Arrancar el hilo de comandos como daemon para que cierre junto al programa
+# Arranco el hilo de comandos como daemon para que cierre junto al programa
 hilo_cmd = threading.Thread(target=escuchar_comandos, daemon=True)
 hilo_cmd.start()
 
-# Abrir archivo en modo append para no borrar datos anteriores
+# Abro append para no borrar datos anteriores
 with open(NOMBRE_ARCHIVO, 'a', encoding='utf-8') as archivo:
     ahora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     archivo.write(f"\n--- Inicio de registro: {ahora} ---\n")
@@ -76,17 +76,17 @@ with open(NOMBRE_ARCHIVO, 'a', encoding='utf-8') as archivo:
 
     while True:
         try:
-            # readline() espera hasta recibir '\n' del PIC (los 3 dígitos + CR + LF)
+            # readline() espero hasta recibir '\n' del PIC (los 3 dígitos + carry return + enter)
             linea = pic.readline().decode('utf-8', errors='ignore').strip()
 
             if linea:
-                # Mostrar en consola
+                # Muestro en pantalla las RPM
                 print(f"RPM: {linea}")
 
-                # Guardar en archivo (solo el valor)
+                # Guardo en el archivo el valor de las RPM
                 archivo.write(f"{linea}\n")
 
-                # flush() para escritura inmediata sin esperar buffer
+                # flush() escritura inmediata sin esperar buffer
                 archivo.flush()
 
         except KeyboardInterrupt:
